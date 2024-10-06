@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <time.h>
 
 void sleep_random(int process_num) {
+    srand(getpid());
     int sleep_time = rand() % 8 + 1;
-    printf("Process %d (PID: %d) beginning. Sleeping for %d seconds.\n", process_num, getpid(), sleep_time);
+    printf("Process %d (PID: %d) created. Sleeping for %d seconds.\n", process_num, getpid(), sleep_time);
     sleep(sleep_time);
 }
 
@@ -13,6 +16,7 @@ void pattern1(int num_of_things) {
    pid_t pids[num_of_things];
 
    for (int i = 0; i < num_of_things; i++) {
+
        pids[i] = fork();
 
        if(pids[i] < 0) {
@@ -23,14 +27,18 @@ void pattern1(int num_of_things) {
            sleep_random(i + 1);
            exit(0);
        }
+
+       printf("Parent: created child %d (PID: %d)\n", i + 1, pids[i]);
    }
 
+   printf("Pattern 1: All processes created\n");
+
    for (int i = 0; i < num_of_things; i++) {
-       printf("Process %d (PID: %d) waiting for process %d (PID: %d)\n", i + 1, getppid(), i + 2, pids[i]);
        waitpid(pids[i], NULL, 0);
        printf("Process %d (PID: %d) is exiting\n", i + 1, pids[i]);
    }
 
+    printf("Pattern 1: All children have exited\n");
 }
 
 //Pattern 2
@@ -72,11 +80,11 @@ int main(int argc, char* argv[]) {
     }
 
     if (pattern_num == 1) {
-        printf("Pattern 1 Selected.\n");
+        printf("Pattern 1 Selected. Creating %d processes...\n", num_of_things);
         pattern1(num_of_things);
     }
     else if (pattern_num == 2) {
-        printf("Pattern 2 Selected.\n");
+        printf("Pattern 2 Selected. Creating %d processes... \n", num_of_things);
         pattern2(1, num_of_things);
     }
 
