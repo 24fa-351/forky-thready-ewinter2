@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <time.h>
 
-void sleep_random(int process_num) {
+void sleep_random1(int process_num) {
     srand(getpid());
     int sleep_time = rand() % 8 + 1;
     printf("Process %d (PID: %d) created. Sleeping for %d seconds.\n", process_num, getpid(), sleep_time);
@@ -24,7 +24,7 @@ void pattern1(int num_of_things) {
            exit(1);
        }
        else if (pids[i] == 0) {
-           sleep_random(i + 1);
+           sleep_random1(i + 1);
            exit(0);
        }
 
@@ -41,10 +41,20 @@ void pattern1(int num_of_things) {
     printf("Pattern 1: All children have exited\n");
 }
 
+void sleep_random2(int process_num) {
+    srand(getpid());
+    int sleep_time = rand() % 8 + 1;
+    printf("%d seconds after creating child %d (pid to be determined)\n", sleep_time, process_num + 1);
+    sleep(sleep_time);
+}
+
+void pattern2_wait(int process_num, pid_t pid) {
+    waitpid(pid, NULL, 0);
+    printf("Child %d (PID: %d), waiting for child %d (PID: %d)\n", process_num - 1, getpid(), process_num, pid);
+}
+
 //Pattern 2
 void pattern2(int process_num, int num_of_things) {
-    sleep_random(process_num);
-
     if (process_num < num_of_things) {
         pid_t pid = fork();
 
@@ -53,13 +63,28 @@ void pattern2(int process_num, int num_of_things) {
             exit(1);
         }
         else if (pid == 0) {
-            printf("Process %d (PID: %d) is creating Process %d (PID %d)\n", process_num, getpid(), process_num + 1, getpid());
-            pattern2(process_num + 1, num_of_things);
+            printf("Child %d (PID: %d): starting\n", process_num, getpid());
+
+            if (process_num < num_of_things) {
+                printf("Child %d (PID: %d), sleeping ", process_num, getpid());
+            } 
+            else {
+                printf("Child %d (PID: %d) has no more children to create.\n", process_num, getpid());
+            }
+
+            sleep_random2(process_num);
+
+            if (process_num + 1 < num_of_things) {
+                pattern2(process_num + 1, num_of_things);
+            }
+
+            printf("Child %d (PID: %d), exiting.\n", process_num, getpid());
+            exit(0);
         }
-    }
-    else {
-        printf("Process %d (PID: %d) has no more children to create.\n", process_num, getpid());
-        printf("Process %d (PID: %d) exiting.\n", process_num, getpid());
+        else {
+            pattern2_wait(process_num, pid);
+            printf("Parent: created child %d (pid %d)\n", process_num, pid);
+        }
     }
 }
 
